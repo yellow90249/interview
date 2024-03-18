@@ -2,9 +2,25 @@
   <q-page class="row q-pt-xl">
     <div class="full-width q-px-xl">
       <div class="q-mb-xl">
-        <q-input v-model="tempData.name" label="姓名" />
-        <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <form @submit.prevent.stop="onSubmit">
+          <q-input
+            ref="nameRef"
+            v-model="inputData.name"
+            label="姓名"
+            filled
+            lazy-rules
+            :rules="[(val) => !!val || '請輸入姓名']"
+          />
+          <q-input
+            ref="ageRef"
+            v-model="inputData.age"
+            label="年齡"
+            filled
+            lazy-rules
+            :rules="[(val) => !!val || '請輸入年齡']"
+          />
+          <q-btn color="primary" class="q-mt-md" type="submit">新增</q-btn>
+        </form>
       </div>
 
       <q-table
@@ -74,6 +90,32 @@
         </template>
       </q-table>
     </div>
+    <q-dialog v-model="prompt" persistent>
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">編輯欄位</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-input
+            dense
+            v-model="promptData.name"
+            autofocus
+            @keyup.enter="prompt = false"
+          />
+          <q-input
+            dense
+            v-model="promptData.age"
+            autofocus
+            @keyup.enter="prompt = false"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="確認修改" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -86,12 +128,20 @@ interface btnType {
   icon: string;
   status: string;
 }
+const nameRef = ref(null);
+const ageRef = ref(null);
+const prompt = ref(false);
+
 const blockData = ref([
   {
     name: 'test',
     age: 25,
   },
 ]);
+const promptData = ref({
+  name: '',
+  age: '',
+});
 const tableConfig = ref([
   {
     label: '姓名',
@@ -119,12 +169,31 @@ const tableButtons = ref([
   },
 ]);
 
-const tempData = ref({
+const inputData = ref({
   name: '',
   age: '',
 });
-function handleClickOption(btn, data) {
-  // ...
+function handleClickOption(btn: btnType, data: any) {
+  if (btn.status === 'edit') {
+    prompt.value = true;
+    promptData.value = data;
+  }
+
+  if (btn.status === 'delete') {
+    blockData.value = blockData.value.filter((item) => {
+      return item !== data;
+    });
+  }
+}
+function onSubmit() {
+  nameRef.value.validate();
+  ageRef.value.validate();
+  if (nameRef.value.hasError || ageRef.value.hasError) {
+    // form has error
+  } else {
+    const { name, age } = inputData.value;
+    blockData.value.push({ name, age: parseInt(age) });
+  }
 }
 </script>
 
